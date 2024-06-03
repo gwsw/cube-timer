@@ -6,10 +6,15 @@
 </head>
 <body style="font-size:100%" onload="main()">
 
-<table style="width:100%">
+<table style="width:100%; margin-top:2em">
 <tr style="height:4em">
-  <td colspan="2" style="font-size:large; text-align:center">
+  <td colspan="2" style="font-size:3em; text-align:center">
     <span>Cube Timer</span>
+  </td>
+</tr>
+<tr>
+  <td>
+    &nbsp;
   </td>
 </tr>
 <tr>
@@ -23,23 +28,33 @@
   </td>
 </tr>
 <tr>
+  <td>
+    &nbsp;
+  </td>
+</tr>
+<tr>
   <td colspan="2">
     <table style="width:100%"> <tr>
-      <td style="width:33%; text-align:center; font-size:x-large">
+      <td style="width:17%; text-align:center; font-size:2em">
         <input type="checkbox" id="beeps" name="beeps" checked>
         <label for="beeps">Beeps</label>
+      </td>
+      <td style="width:16%; text-align:center; font-size:2em">
+        <a href="http://greenwoodsoftware.com/cgi-bin/read-ct"> Results </a>
       </td>
       <td style="width:33%; text-align:center">
         <input type="button" value="&nbsp;Upload result&nbsp;" disabled="true"  id="send_btn" onclick="click_send();" 
                style="height:3em; font-size:xx-large; background-color:#e0e0ff">
       </td>
-      <td style="width:10%; text-align:center; font-size:large">
-        <a href="http://greenwoodsoftware.com/cgi-bin/read-ct"> See log </a>
-      </td>
       <td style="font-size:2em">
         <span id="send_status"></span>
       </td>
     </tr> </table>
+  </td>
+</tr>
+<tr>
+  <td>
+    &nbsp;
   </td>
 </tr>
 <tr>
