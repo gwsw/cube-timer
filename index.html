@@ -1,0 +1,176 @@
+<!doctype html>
+<html>
+<head>
+<title>Cube Timer</title>
+
+</head>
+<body style="font-size:100%" onload="main()">
+
+<table style="width:100%">
+<tr style="height:4em">
+  <td colspan="2" style="font-size:large; text-align:center">
+    <span>Cube Timer</span>
+  </td>
+</tr>
+<tr>
+  <td style="width:50%">
+    <input type="button" id="stop_btn" onclick="click_stop();" 
+           style="width:100%; height:5em; font-size:xx-large; background-color:#ff2020; color:#ffffff">
+  </td>
+  <td>
+    <input type="button" id="go_btn" onclick="click_go();"
+           style="width:100%; height:5em; font-size:xx-large; background-color:#40ff40">
+  </td>
+</tr>
+<tr>
+  <td colspan="2">
+    <table style="width:100%"> <tr>
+      <td style="width:33%; text-align:center; font-size:x-large">
+        <input type="checkbox" id="beeps" name="beeps" checked>
+        <label for="beeps">Beeps</label>
+      </td>
+      <td style="width:33%; text-align:center">
+        <input type="button" value="&nbsp;Log result&nbsp;" disabled="true"  id="send_btn" onclick="click_send();" 
+               style="height:3em; font-size:xx-large; background-color:#e0e0ff">
+      </td>
+      <td style="width:10%; text-align:center; font-size:large">
+        <a href="http://greenwoodsoftware.com/cgi-bin/read-ct"> See log </a>
+      </td>
+      <td style="font-size:2em">
+        <span id="send_status"></span>
+      </td>
+    </tr> </table>
+  </td>
+</tr>
+<tr>
+  <td colspan="2">
+    <textarea id="tlist" rows="14" cols="40" readonly
+              style="width:100%; font-family:monospace; font-size:4em; overflow-y:scroll"></textarea>
+  </td>
+</tr>
+</table>
+
+<script>
+
+var tot_start_time = 0;
+var running = false;
+var segs = [];
+var audioCtx;
+
+function main() {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext || window.audioContext);
+    update();
+}
+function click_stop() {
+    beep(60, 500, 1, "sawtooth");
+    if (!running) {
+        reset();
+    } else {
+        if (segs.length > 0)
+            el("send_btn").disabled = false;
+    }
+    running = false;
+}
+function click_go() {
+    beep(40, 1000);
+    if (!running) {
+        reset();
+        tot_start_time = now();
+        running = true;
+        sched_update();
+    } else { // Next
+        const tot_time = now() - tot_start_time;
+        segs.push(tot_time);
+    }
+}
+function click_send() {
+    el("send_btn").disabled = true;
+    var url = "http://greenwoodsoftware.com/cgi-bin/log-ct";
+    var body = segs.join(",");
+    set_send_status("Sending result...");
+    const req = new XMLHttpRequest();
+    req.onreadystatechange = function() { http_done(this); }
+    req.open("POST", url, true);
+    req.send(body);
+}
+function http_done(req) {
+    if (req.readyState != 4) return;
+    if (req.status == 200) {
+        set_send_status("Sent successfully");
+    } else {
+        set_send_status("HTTP error "+req.status.toString());
+    }
+}
+function set_send_status(status) {
+    el("send_status").innerHTML = status;
+}
+function reset() {
+    segs.splice(0);
+    tot_start_time = 0;
+    el("tlist").value = "";
+    el("send_btn").disabled = true;
+    set_send_status("");
+}
+function update() {
+    const now_time = now();
+    let msg = "";
+    let prev_etime = 0;
+    let len = segs.length;
+    if (running) ++len; // for final, "now" entry
+    for (let index = 0; index < len; ++index) {
+        const etime = (index < segs.length) ? segs[index] : (now_time - tot_start_time);
+        msg += pr(index+1,2," ") + ": " + pr_time(etime-prev_etime) + " " + pr_time(etime) + "\r\n";
+        prev_etime = etime;
+    }
+    el("tlist").value = msg;
+    el("stop_btn").value = running ? "Stop" : "Reset";
+    el("go_btn").value = running ? "Next" : "GO";
+    if (running)
+        sched_update();
+}
+function sched_update() {
+    window.requestAnimationFrame(update);
+}
+// duration of the tone in milliseconds. Default is 500
+// frequency of the tone in hertz. default is 440
+// volume of the tone. Default is 1, off is 0.
+// type of tone. Possible values are sine, square, sawtooth, triangle, and custom. Default is sine.
+// onended to use on end of tone
+function beep(duration, frequency, volume, type, onended) {
+    if (!audioCtx) return;
+    if (!el("beeps").checked) return;
+    var osc = audioCtx.createOscillator();
+    var gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    if (volume) { gain.gain.value = volume; }
+    if (frequency) { osc.frequency.value = frequency; }
+    if (type) { osc.type = type; }
+    if (onended) { osc.onended = onended; }
+    osc.start(audioCtx.currentTime);
+    osc.stop(audioCtx.currentTime + ((duration || 500) / 1000));
+}
+function pr_time(ms) {
+    const min = Math.floor(ms/(60*1000));
+    ms -= min * 60*1000;
+    const sec = Math.floor(ms/1000);
+    ms -= sec * 1000;
+    const ths = Math.floor(ms/100);
+    let r = (min > 0) ? pr(min,3," ")+":" : "    ";
+    r += pr(sec,2,(min>0)?"0":" ") + "." + pr(ths,1,"0");
+    return r;
+}
+function pr(num, digits, pad) {
+    const pnum = pad.repeat(digits) + num.toString();
+    return pnum.substring(pnum.length-digits, pnum.length);
+}
+function el(name) {
+    return document.getElementById(name);
+}
+function now() {
+    return Math.floor(performance.now());
+}
+</script>
+
+</body>
+</html>

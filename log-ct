@@ -1,0 +1,52 @@
+#! /usr/bin/perl
+use strict;
+BEGIN {
+	$ENV{PATH} = "/home/markn/bin:/bin:/usr/local/bin";
+}
+
+my $logfile = "/home/markn/log-ct/curr.log";
+
+sub main {
+	# Get parameters.
+	my $length = $ENV{CONTENT_LENGTH};
+	return result("401 Must use HTTP POST") if not $length;
+    my $script = ($ENV{SCRIPT_NAME} or '');
+    $script =~ s|^.*/([^/]+)$|$1|;
+
+	# Read the POST data.
+	my $data = '';
+	my $nread = 0;
+	while ($nread < $length) {
+		my $n = read STDIN, $data, $length - $nread, $nread;
+		last if not $n or $n <= 0;
+		$nread += $n;
+	}
+	return result("405 Incomplete data (expected $length, got $nread)")
+		if $nread != $length;
+
+	# Write the data into the file.
+	if (not open FILE, ">>$logfile") {
+		return result("501 Cannot create $logfile: $!");
+	}
+    my ($sec,$min,$hr,$mday,$mon,$yr) = localtime();
+	printf FILE "+%4d-%02d-%02d %02d:%02d:%02d %s %s [%d]\n",
+        $yr+1900, $mon+1, $mday, $hr, $min, $sec, $ENV{REMOTE_ADDR}, $script, $nread;
+    foreach my $line (split /\n/, $data) {
+        $line =~ s/\r+$//;
+        printf FILE " %s\n", $line;
+    }
+	close FILE;
+	return result("200 OK");
+}
+
+sub result {
+	my ($msg) = @_;
+	$msg .= "\r\n";
+	print "Content-Type: text/plain\r\n";
+	print "Content-Length: ", length($msg), "\r\n";
+	print "\r\n";
+	print $msg;
+}
+
+main();
+exit 0;

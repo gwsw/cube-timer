@@ -1,0 +1,100 @@
+#! /usr/bin/perl
+use strict;
+BEGIN {
+	$ENV{PATH} = "/home/markn/bin:/bin:/usr/local/bin";
+}
+
+my $logfile = "/home/markn/log-ct/curr.log";
+
+sub main {
+    my $fd;
+	if (not open $fd, '<', $logfile) {
+		return result("Cannot open $logfile: $!", "text/plain");
+	}
+    my $result = <<_EOF_;
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head> 
+<title> Cube timer </title> 
+<style>
+table { border-collapse:collapse; font-size:x-large; margin:5%; }
+th { border:1px solid black; }
+///td { padding-top:.2em; padding-bottom:.2em; padding-left:.4em; padding-right:.4em; }
+.tr1 { padding-top:.2em; border-top: 1px solid black; }
+.tr2 { }
+.td1 { padding-left:.4em; padding-right:.4em; text-align:right; }
+.td2 { padding-left:.4em; padding-right:.4em; text-align:right; }
+.num { font-family:monospace; }
+</style>
+</head>
+<body>
+<h2><center> Rubik's Cube completion times </center></h2>
+<table>
+<tr> <th>Date</th> <th>Time</th> <th colspan="2">Compl.<br>time</th> 
+     <th>BE</th> <th>BC</th> <th>ME</th> <th>TE</th> <th>TC</th> <th>TCO</th> </tr>
+_EOF_
+       
+    my @rows;
+    while (<$fd>) {
+        my ($date, $time, $ip) = split;
+        $date =~ s/^\+//;
+        my $times = <$fd>;
+        chomp $times;
+        my @times = split /,/, $times;
+        my $total_time = $times[$#times];
+        my $row1 = "<tr class=\"tr1\"> <td class=\"td1\">$date</td> <td class=\"td1\">" . time24($time) . "</td> <td class=\"td1 num\">" . tm($total_time) . "</td> <td class=\"td1\">&nbsp;</td>";
+        my $row2 = "<tr class=\"tr2\"> <td class=\"td2\"></td> <td class=\"td2\"></td> <td class=\"td2\"></td> <td class=\"td2\"></td>";
+        my $prev = 0;
+        foreach my $time (@times) {
+            my $seg = $time - $prev;
+            $prev = $time;
+            $row1 .= '<td class="td1 num">' . tm($seg) . '</td>';
+            $row2 .= '<td class="td2 num" style="color:red">' . sprintf("%d%%", 100 * $seg / $total_time) . '</td>';
+        }
+        $row1 .= "</tr>";
+        $row2 .= "</tr>";
+        unshift @rows, $row1, $row2;
+    }
+	close FILE;
+    foreach my $row (@rows) { $result .= $row; }
+    $result .= "</table> </body> </html>";
+	result($result, "text/html");
+}
+
+sub tm {
+    my ($ms) = @_;
+    my $min = int($ms / 60000);
+    $ms -= $min * 60000;
+    my $sec = int($ms / 1000);
+    $ms -= $sec * 1000;
+    my $tenths = int($ms / 100);
+    my $tm = ($min == 0) ?
+        sprintf "%d.%d", $sec, $tenths :
+        sprintf "%d:%02d.%d", $min, $sec, $tenths;
+    return $tm;
+}
+
+sub result {
+	my ($msg, $type) = @_;
+	$msg .= "\r\n";
+	print "Content-Type: $type\r\n";
+	print "Content-Length: ", length($msg), "\r\n";
+	print "\r\n";
+	print $msg;
+}
+
+sub time24 {
+    my ($time) = @_;
+    my $hr = substr($time,0,2);
+    my $am = 'am';
+    if ($hr == 0) {
+        $hr = 12;
+    } elsif ($hr > 12) {
+        $hr -= 12;
+        $am = 'pm';
+    }
+    return (sprintf("%2d", $hr) . substr($time,2,3) . $am);
+}
+
+main();
+exit 0;
