@@ -30,7 +30,7 @@
         <label for="beeps">Beeps</label>
       </td>
       <td style="width:33%; text-align:center">
-        <input type="button" value="&nbsp;Log result&nbsp;" disabled="true"  id="send_btn" onclick="click_send();" 
+        <input type="button" value="&nbsp;Upload result&nbsp;" disabled="true"  id="send_btn" onclick="click_send();" 
                style="height:3em; font-size:xx-large; background-color:#e0e0ff">
       </td>
       <td style="width:10%; text-align:center; font-size:large">
@@ -57,6 +57,17 @@ var running = false;
 var segs = [];
 var audioCtx;
 
+const rstates = [
+    "Bottom edges",
+    "Bottom corners",
+    "Middle edges",
+    "Top edges",
+    "Top corners",
+    "Top corner orient",
+    "Done",
+];
+const rstates_short = [ "BE", "BC", "ME", "TE", "TC", "TCO", "" ];
+
 function main() {
     audioCtx = new (window.AudioContext || window.webkitAudioContext || window.audioContext);
     update();
@@ -82,6 +93,12 @@ function click_go() {
         const tot_time = now() - tot_start_time;
         segs.push(tot_time);
     }
+    set_send_status(rstate(segs.length));
+}
+function rstate(n,short) {
+    if (n >= rstates.length) n = rstates.length-1;
+    if (short) return rstates_short[n];
+    return rstates[n];
 }
 function click_send() {
     el("send_btn").disabled = true;
@@ -119,7 +136,8 @@ function update() {
     if (running) ++len; // for final, "now" entry
     for (let index = 0; index < len; ++index) {
         const etime = (index < segs.length) ? segs[index] : (now_time - tot_start_time);
-        msg += pr(index+1,2," ") + ": " + pr_time(etime-prev_etime) + " " + pr_time(etime) + "\r\n";
+        msg += pr(index+1,2," ") + ": " + pr_time(etime-prev_etime) + " " + pr_time(etime) + 
+        "  " + rstate(index,1) + "\r\n";
         prev_etime = etime;
     }
     el("tlist").value = msg;
