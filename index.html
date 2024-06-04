@@ -75,17 +75,32 @@
 </tr>
 </table>
 
-<div id="settings" style="position:fixed; display:none; margin-left:20%; margin-right:20%; margin-top:10%; height:50%; border:3px solid black; top:0; left:0; right:0; bottom:0; background-color:#80a0f0; z-index:2">
+<div id="settings" style="position:fixed; display:none; margin-left:8%; margin-right:8%; margin-top:10%; height:75%; border:3px solid black; top:0; left:0; right:0; bottom:0; font-size:xx-large; background-color:#a0c0ff; z-index:2">
  <center>
  <table style="margin:5%">
   <tr>
-   <td colspan="3"; style="text-align:center; font-weight:bold; text-decoration:underline"> Settings </td>
+   <td style="text-align:center; font-weight:bold; text-decoration:underline"> Settings </td>
   </tr>
   <tr><td>&nbsp;</td></tr>
   <tr>
-   <td style="text-align:right">
+   <td style="">
      <input type="checkbox" id="beeps" name="beeps" checked>
      <label for="beeps">Beeps</label>
+   </td>
+  </tr>
+  <tr>
+   <td>
+   <span>Solution stages:</span> <br>
+   <textarea id="settings_rstates" rows="14" cols="40" style="font-size:xx-large">
+BE:Bottom edges
+BC:Bottom corners
+ME:Middle edges
+TE:Top edges
+TC:Top corners
+TCO:Top corner orient
+:Done
+   </textarea> <br>
+   <span>One stage per line, short name, then colon, then long name.</span> <br>
    </td>
   </tr>
   <tr style="text-align:center">
@@ -94,7 +109,7 @@
    </td>
   </tr>
   <tr>
-   <td colspan="3"; style="text-align:right"> Cube Timer 0.1 <br> Copyright &copy; 2024 Mark Nudelman</td>
+   <td colspan="3"; style="text-align:right; color:grey"> Cube Timer 0.1 <br> Copyright &copy; 2024 Mark Nudelman</td>
   </tr>
  </table>
  </center>
@@ -107,18 +122,11 @@ var running = false;
 var segs = [];
 var audioCtx;
 
-const rstates = [
-    "BE:Bottom edges",
-    "BC:Bottom corners",
-    "ME:Middle edges",
-    "TE:Top edges",
-    "TC:Top corners",
-    "TCO:Top corner orient",
-    ":Done",
-];
+var rstates = [];
 
 function main() {
     audioCtx = new (window.AudioContext || window.webkitAudioContext || window.audioContext);
+    init_rstates();
     update();
 }
 function click_stop() {
@@ -129,6 +137,7 @@ function click_stop() {
         if (segs.length > 0)
             el("send_btn").disabled = false;
     }
+    set_send_status("");
     running = false;
 }
 function click_go() {
@@ -146,14 +155,23 @@ function click_go() {
 }
 function click_settings() {
     const settings = el("settings");
+    const rstates_text = el("settings_rstates");
     if (settings.style.display != "none") { // close settings
         settings.style.display = "none";
+        rstates = rstates_text.value.split("\n");
     } else { // open settings
+        rstates_text.value = rstates.join("\n");
         settings.style.display = "block";
     }
 }
+function init_rstates() {
+    rstates = el("settings_rstates").value.split("\n");
+}
 function rstate(n,short) {
-    if (n >= rstates.length) n = rstates.length-1;
+    if (n >= rstates.length) {
+        if (short) return "";
+        n = rstates.length-1;
+    }
     const s = rstates[n];
     const colon = s.indexOf(":");
     if (short) {
