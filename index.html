@@ -7,7 +7,12 @@
 <body style="font-size:100%" onload="main()">
 
 <table style="width:100%; margin-top:2em">
-<tr style="height:4em">
+<tr>
+ <td>
+  <img src="1x1.png" style="height:3em">
+ </td>
+</tr>
+<tr>
   <table style="width:100%"> <tr>
     <td style="width:10%">
     </td>
@@ -15,13 +20,19 @@
       <span>Cube Timer</span>
     </td>
     <td style="width:10%">
-      <span style="text-align:right"> <img src="hamburger.png" style="height:4em"> </span>
+      <input type="image" src="hamburger.png" style="height:3.5em">
     </td>
   </tr> </table>
 </tr>
 <tr>
+ <td>
+  <img src="1x1.png" style="height:5em">
+ </td>
+</tr>
+<tr>
   <td>
-    &nbsp;
+    <textarea id="tlist" rows="14" cols="40" readonly
+              style="width:100%; font-family:monospace; font-size:4em; overflow-y:scroll"></textarea>
   </td>
 </tr>
 <tr>
@@ -37,9 +48,9 @@
   </tr> </table>
 </tr>
 <tr>
-  <td>
-    &nbsp;
-  </td>
+ <td>
+  <img src="1x1.png" style="height:4em">
+ </td>
 </tr>
 <tr>
   <table style="width:100%"> <tr>
@@ -64,12 +75,6 @@
     &nbsp;
   </td>
 </tr>
-<tr>
-  <td>
-    <textarea id="tlist" rows="14" cols="40" readonly
-              style="width:100%; font-family:monospace; font-size:4em; overflow-y:scroll"></textarea>
-  </td>
-</tr>
 </table>
 
 <script>
@@ -80,15 +85,14 @@ var segs = [];
 var audioCtx;
 
 const rstates = [
-    "Bottom edges",
-    "Bottom corners",
-    "Middle edges",
-    "Top edges",
-    "Top corners",
-    "Top corner orient",
-    "Done",
+    "BE:Bottom edges",
+    "BC:Bottom corners",
+    "ME:Middle edges",
+    "TE:Top edges",
+    "TC:Top corners",
+    "TCO:Top corner orient",
+    ":Done",
 ];
-const rstates_short = [ "BE", "BC", "ME", "TE", "TC", "TCO", "" ];
 
 function main() {
     audioCtx = new (window.AudioContext || window.webkitAudioContext || window.audioContext);
@@ -119,8 +123,13 @@ function click_go() {
 }
 function rstate(n,short) {
     if (n >= rstates.length) n = rstates.length-1;
-    if (short) return rstates_short[n];
-    return rstates[n];
+    const s = rstates[n];
+    const colon = s.indexOf(":");
+    if (short) {
+        return (colon < 0) ?  "" : s.substr(0, colon);
+    } else {
+        return (colon < 0) ? s : s.substr(colon+1)
+    }
 }
 function click_send() {
     el("send_btn").disabled = true;
