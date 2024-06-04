@@ -83,7 +83,7 @@
   </tr>
   <tr><td>&nbsp;</td></tr>
   <tr>
-   <td style="">
+   <td style="padding-bottom:.75em">
      <input type="checkbox" id="beeps" name="beeps" checked>
      <label for="beeps">Beeps</label>
    </td>
@@ -91,21 +91,14 @@
   <tr>
    <td>
    <span>Solution stages:</span> <br>
-   <textarea id="settings_rstates" rows="14" cols="40" style="font-size:xx-large">
-BE:Bottom edges
-BC:Bottom corners
-ME:Middle edges
-TE:Top edges
-TC:Top corners
-TCO:Top corner orient
-:Done
+   <textarea id="settings_rstates" rows="10" cols="36" style="font-size:xx-large">
    </textarea> <br>
    <span>One stage per line, short name, then colon, then long name.</span> <br>
    </td>
   </tr>
   <tr style="text-align:center">
    <td colspan="3" style="padding:12px">
-    <button type="button" id="settings_done_btn" onclick="click_settings()">Done</button>
+    <button type="button" id="settings_done_btn" onclick="click_settings()" style="width:10em; height:3em">Done</button>
    </td>
   </tr>
   <tr>
@@ -116,17 +109,26 @@ TCO:Top corner orient
 </div>
 
 <script>
+// -----------------------------------------------------------------------
 
 var tot_start_time = 0;
 var running = false;
 var segs = [];
 var audioCtx;
 
-var rstates = [];
+var rstates = [
+	"BE:Bottom edges",
+	"BC:Bottom corners",
+	"ME:Middle edges",
+	"TE:Top edges",
+	"TC:Top corners",
+	"TCO:Top corner orient",
+	":Done",
+];
 
 function main() {
     audioCtx = new (window.AudioContext || window.webkitAudioContext || window.audioContext);
-    init_rstates();
+    el("settings_rstates").value = rstates.join("\n");
     update();
 }
 function click_stop() {
@@ -137,7 +139,7 @@ function click_stop() {
         if (segs.length > 0)
             el("send_btn").disabled = false;
     }
-    set_send_status("");
+    set_status("");
     running = false;
 }
 function click_go() {
@@ -151,7 +153,7 @@ function click_go() {
         const tot_time = now() - tot_start_time;
         segs.push(tot_time);
     }
-    set_send_status(rstate(segs.length));
+    set_status(rstate(segs.length));
 }
 function click_settings() {
     const settings = el("settings");
@@ -164,14 +166,8 @@ function click_settings() {
         settings.style.display = "block";
     }
 }
-function init_rstates() {
-    rstates = el("settings_rstates").value.split("\n");
-}
 function rstate(n,short) {
-    if (n >= rstates.length) {
-        if (short) return "";
-        n = rstates.length-1;
-    }
+    if (n >= rstates.length) return "";
     const s = rstates[n];
     const colon = s.indexOf(":");
     if (short) {
@@ -182,9 +178,9 @@ function rstate(n,short) {
 }
 function click_send() {
     el("send_btn").disabled = true;
+    set_status("Sending result...");
     var url = "http://greenwoodsoftware.com/cgi-bin/log-ct";
     var body = segs.join(",");
-    set_send_status("Sending result...");
     const req = new XMLHttpRequest();
     req.onreadystatechange = function() { http_done(this); }
     req.open("POST", url, true);
@@ -193,12 +189,12 @@ function click_send() {
 function http_done(req) {
     if (req.readyState != 4) return;
     if (req.status == 200) {
-        set_send_status("Sent successfully");
+        set_status("Sent successfully");
     } else {
-        set_send_status("HTTP error "+req.status.toString());
+        set_status("HTTP error "+req.status.toString());
     }
 }
-function set_send_status(status) {
+function set_status(status) {
     el("send_status").innerHTML = status;
 }
 function reset() {
@@ -206,7 +202,7 @@ function reset() {
     tot_start_time = 0;
     el("tlist").value = "";
     el("send_btn").disabled = true;
-    set_send_status("");
+    set_status("");
 }
 function update() {
     const now_time = now();
@@ -217,7 +213,7 @@ function update() {
     for (let index = 0; index < len; ++index) {
         const etime = (index < segs.length) ? segs[index] : (now_time - tot_start_time);
         msg += pr(index+1,2," ") + ": " + pr_time(etime-prev_etime) + " " + pr_time(etime) + 
-        "  " + rstate(index,1) + "\r\n";
+               "  " + rstate(index,1) + "\r\n";
         prev_etime = etime;
     }
     el("tlist").value = msg;
