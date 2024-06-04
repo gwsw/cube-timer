@@ -20,7 +20,7 @@
       <span>Cube Timer</span>
     </td>
     <td style="width:10%">
-      <input type="image" src="hamburger.png" style="height:3.5em">
+      <input type="image" src="hamburger.png" style="height:3.5em" onclick="click_settings()">
     </td>
   </tr> </table>
 </tr>
@@ -55,8 +55,6 @@
 <tr>
   <table style="width:100%"> <tr>
     <td style="width:17%; text-align:center; font-size:2em">
-      <input type="checkbox" id="beeps" name="beeps" checked>
-      <label for="beeps">Beeps</label>
     </td>
     <td style="width:16%; text-align:center; font-size:2em">
       <a href="http://greenwoodsoftware.com/cgi-bin/read-ct"> Results </a>
@@ -76,6 +74,31 @@
   </td>
 </tr>
 </table>
+
+<div id="settings" style="position:fixed; display:none; margin-left:20%; margin-right:20%; margin-top:10%; height:50%; border:3px solid black; top:0; left:0; right:0; bottom:0; background-color:#80a0f0; z-index:2">
+ <center>
+ <table style="margin:5%">
+  <tr>
+   <td colspan="3"; style="text-align:center; font-weight:bold; text-decoration:underline"> Settings </td>
+  </tr>
+  <tr><td>&nbsp;</td></tr>
+  <tr>
+   <td style="text-align:right">
+     <input type="checkbox" id="beeps" name="beeps" checked>
+     <label for="beeps">Beeps</label>
+   </td>
+  </tr>
+  <tr style="text-align:center">
+   <td colspan="3" style="padding:12px">
+    <button type="button" id="settings_done_btn" onclick="click_settings()">Done</button>
+   </td>
+  </tr>
+  <tr>
+   <td colspan="3"; style="text-align:right"> Cube Timer 0.1 <br> Copyright &copy; 2024 Mark Nudelman</td>
+  </tr>
+ </table>
+ </center>
+</div>
 
 <script>
 
@@ -120,6 +143,14 @@ function click_go() {
         segs.push(tot_time);
     }
     set_send_status(rstate(segs.length));
+}
+function click_settings() {
+    const settings = el("settings");
+    if (settings.style.display != "none") { // close settings
+        settings.style.display = "none";
+    } else { // open settings
+        settings.style.display = "block";
+    }
 }
 function rstate(n,short) {
     if (n >= rstates.length) n = rstates.length-1;
